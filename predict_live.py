@@ -1,11 +1,26 @@
 import time
+import os
 import numpy as np
 import joblib
 import smbus2
 import RPi.GPIO as GPIO
 
+from dotenv import load_dotenv
+from supabase import create_client
+
 # ----------------------------------
-#  CONFIGURACIÓN DEL ADC
+#  CARGAR VARIABLES DE ENTORNO
+# ----------------------------------
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+print("Conectado a Supabase correctamente.")
+
+# ----------------------------------
+#  ADC
 # ----------------------------------
 I2C_ADDR = 0x4B
 CMD = 0x84
@@ -14,23 +29,22 @@ bus = smbus2.SMBus(1)
 def leer_adc(canal):
     return bus.read_byte_data(I2C_ADDR, CMD | (canal << 4))
 
-
 # ----------------------------------
-#  CONFIGURACIÓN MOTORES (PWM)
+#  MOTORES
 # ----------------------------------
-ENA = 18     # Motor DERECHO
+ENA = 18
 IN1 = 17
 IN2 = 27
 
-ENB = 13     # Motor IZQUIERDO
+ENB = 13
 IN3 = 22
 IN4 = 23
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup([ENA, IN1, IN2, ENB, IN3, IN4], GPIO.OUT)
 
-motorA = GPIO.PWM(ENA, 1000)  # DERECHO
-motorB = GPIO.PWM(ENB, 1000)  # IZQUIERDO
+motorA = GPIO.PWM(ENA, 1000)
+motorB = GPIO.PWM(ENB, 1000)
 motorA.start(0)
 motorB.start(0)
 
@@ -51,36 +65,39 @@ def avanzar():
     motorB.ChangeDutyCycle(60)
 
 def girar_izquierda():
-    print("LUZ IZQUIERDA → GIRAR HACIA LUZ")
+    print("GIRO IZQUIERDA")
     direccion_adelante()
-    motorA.ChangeDutyCycle(70)   # derecho rápido
-    motorB.ChangeDutyCycle(20)   # izquierdo lento
+    motorA.ChangeDutyCycle(70)
+    motorB.ChangeDutyCycle(20)
 
 def girar_derecha():
-    print("LUZ DERECHA → GIRAR HACIA LUZ")
+    print("GIRO DERECHA")
     direccion_adelante()
-    motorA.ChangeDutyCycle(20)   # derecho lento
-    motorB.ChangeDutyCycle(70)   # izquierdo rápido
-
+    motorA.ChangeDutyCycle(20)
+    motorB.ChangeDutyCycle(70)
 
 # ----------------------------------
-#  CONFIGURACIÓN IA
+#  IA
 # ----------------------------------
 SAMPLE_RATE = 40
 VENTANA_SEG = 0.05
 MUESTRAS_POR_VENTANA = int(SAMPLE_RATE * VENTANA_SEG)
 
 clasificador = joblib.load("modelo_luz.pkl")
-print("Modelo cargado correctamente.")
+print("Modelo IA cargado correctamente.")
 
 
-# ----------------------------------
-#  LOOP PRINCIPAL (IA + MOVIMIENTO)
-# ----------------------------------
+# =======================================
+#   NUEVA VARIABLE: ÚLTIMA ACCIÓN
+# =======================================
+ultima_accion = None
+
+
 print("Iniciando detección...")
 
 try:
     while True:
+        # === CAPTURA RÁPIDA ===
         valores_L = []
         valores_R = []
 
@@ -91,37 +108,66 @@ try:
             valores_R.append(R)
             time.sleep(1.0 / SAMPLE_RATE)
 
-        # ----- Características -----
-        caracteristicas = [
-            np.mean(valores_L), np.std(valores_L),
-            np.mean(valores_R), np.std(valores_R)
-        ]
+        # Datos promediados
+        prom_L = float(np.mean(valores_L))
+        prom_R = float(np.mean(valores_R))
+        desv_L = float(np.std(valores_L))
+        desv_R = float(np.std(valores_R))
 
-        X = np.array([caracteristicas])
-        prediccion = clasificador.predict(X)[0]
+        X = np.array([[prom_L, desv_L, prom_R, desv_R]])
+        prediccion = int(clasificador.predict(X)[0])
 
-        # ================================
-        #   1 = LINTERN A   —   0 = AMBIENTE
-        # ================================
+        L_ult = valores_L[-1]
+        R_ult = valores_R[-1]
+
         if prediccion == 1:
-            print("🔦 LINTERN A — ¡Mover hacia la luz!")
-
-            # Movimiento usando L y R del ÚLTIMO segundo
-            L_ult = valores_L[-1]
-            R_ult = valores_R[-1]
+            print("🔦 Luz detectada → movimiento")
 
             if L_ult > R_ult:
+                accion = "girar_izquierda"
                 girar_izquierda()
             elif R_ult > L_ult:
+                accion = "girar_derecha"
                 girar_derecha()
             else:
+                accion = "avanzar"
                 avanzar()
-
+        
         else:
-            print("🌙 AMBIENTE — Deteniendo carro")
+            print("🌙 No hay linterna → detener")
+            accion = "detener"
             detener()
 
+        # Convertir predicción
+        pred_texto = "linterna" if prediccion == 1 else "ambiente"
+
+
+        # =====================================================
+        #   SOLO GUARDAR EN SUPABASE SI LA ACCIÓN CAMBIA
+        # =====================================================
+        if accion != ultima_accion:
+            try:
+                supabase.table("sensores_luz").insert({
+                    "valor_l": prom_L,
+                    "valor_r": prom_R,
+                    "prediccion": pred_texto,
+                    "accion": accion
+                }).execute()
+
+                print("✔ Registro guardado (acción nueva):", accion)
+
+                # ACTUALIZA LA ACCIÓN RECORDADA
+                ultima_accion = accion
+
+            except Exception as e:
+                print("ERROR enviando a Supabase:", e)
+
+        # Si no cambia, solo sigue moviéndose sin guardar
+        else:
+            print("↻ Acción repetida, no se guarda en BD.")
+
+
 except KeyboardInterrupt:
-    print("Finalizando...")
+    print("Finalizando programa...")
     detener()
     GPIO.cleanup()
