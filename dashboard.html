@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard del Carrito</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <h1 class="titulo-principal">🚗 Panel del Carrito Seguidor de Luz</h1>
+
+    <!-- ======================= -->
+    <!--   1. ESTADO ACTUAL      -->
+    <!-- ======================= -->
+    <section class="estado-actual">
+        <h2>📡 Estado Actual del Carrito</h2>
+
+        <div class="card-estado">
+            <div class="fila">
+                <span class="titulo">Última Acción:</span>
+                <span id="accion" class="valor">—</span>
+            </div>
+
+            <div class="fila">
+                <span class="titulo">Predicción:</span>
+                <span id="prediccion" class="valor">—</span>
+            </div>
+
+            <div class="fila">
+                <span class="titulo">Sensor Izquierdo (L):</span>
+                <span id="sensorL" class="valor">—</span>
+            </div>
+
+            <div class="fila">
+                <span class="titulo">Sensor Derecho (R):</span>
+                <span id="sensorR" class="valor">—</span>
+            </div>
+
+            <div class="fila">
+                <span class="titulo">Última actualización:</span>
+                <span id="fecha" class="valor">—</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ======================= -->
+    <!--   2. HISTORIAL          -->
+    <!-- ======================= -->
+    <section class="historial">
+        <h2>📜 Historial Reciente</h2>
+
+        <table class="tabla-historial">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                    <th>Predicción</th>
+                    <th>Sensor L</th>
+                    <th>Sensor R</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-datos">
+                <!-- Se llena con JS -->
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ============================ -->
+    <!--   3. GRÁFICO TIEMPO REAL     -->
+    <!-- ============================ -->
+    <section class="grafico">
+        <h2>📈 Gráfico en Tiempo Real (Sensores L y R)</h2>
+
+        <div class="grafico-container">
+            <canvas id="graficoLuz"></canvas>
+        </div>
+    </section>
+
+
+    <script>
+        let chart;
+        let labels = [];
+        let dataL = [];
+        let dataR = [];
+
+        async function cargarDatos() {
+            const res = await fetch("/api/datos");
+            const datos = await res.json();
+
+            if (datos.length === 0) return;
+
+            // === Estado actual ===
+            const ultimo = datos[0];
+            document.getElementById("accion").innerText = ultimo.accion;
+            document.getElementById("prediccion").innerText = ultimo.prediccion;
+            document.getElementById("sensorL").innerText = ultimo.sensor_izq;
+            document.getElementById("sensorR").innerText = ultimo.sensor_der;
+            document.getElementById("fecha").innerText = ultimo.fecha;
+
+            // === Tabla historial ===
+            const tabla = document.getElementById("tabla-datos");
+            tabla.innerHTML = "";
+
+            datos.forEach(d => {
+                tabla.innerHTML += `
+                    <tr>
+                        <td>${d.fecha}</td>
+                        <td>${d.accion}</td>
+                        <td>${d.prediccion}</td>
+                        <td>${d.sensor_izq}</td>
+                        <td>${d.sensor_der}</td>
+                    </tr>
+                `;
+            });
+
+            // === Gráfico ===
+            labels = datos.map(d => d.fecha).reverse();
+            dataL = datos.map(d => d.sensor_izq).reverse();
+            dataR = datos.map(d => d.sensor_der).reverse();
+
+            actualizarGrafico();
+        }
+
+        function crearGrafico() {
+            const ctx = document.getElementById("graficoLuz");
+
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: "Sensor Izquierdo (L)",
+                            data: dataL,
+                            borderWidth: 2
+                        },
+                        {
+                            label: "Sensor Derecho (R)",
+                            data: dataR,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        function actualizarGrafico() {
+            if (!chart) {
+                crearGrafico();
+            } else {
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = dataL;
+                chart.data.datasets[1].data = dataR;
+                chart.update();
+            }
+        }
+
+        // Cargar cada 3 segundos
+        cargarDatos();
+        setInterval(cargarDatos, 3000);
+    </script>
+
+</body>
+</html>
