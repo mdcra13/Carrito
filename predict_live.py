@@ -8,9 +8,6 @@ import RPi.GPIO as GPIO
 from dotenv import load_dotenv
 from supabase import create_client
 
-# ----------------------------------
-#  CARGAR VARIABLES DE ENTORNO
-# ----------------------------------
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -19,9 +16,6 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 print("Conectado a Supabase correctamente.")
 
-# ----------------------------------
-#  ADC
-# ----------------------------------
 I2C_ADDR = 0x4B
 CMD = 0x84
 bus = smbus2.SMBus(1)
@@ -29,9 +23,6 @@ bus = smbus2.SMBus(1)
 def leer_adc(canal):
     return bus.read_byte_data(I2C_ADDR, CMD | (canal << 4))
 
-# ----------------------------------
-#  MOTORES
-# ----------------------------------
 ENA = 18
 IN1 = 17
 IN2 = 27
@@ -76,9 +67,7 @@ def girar_derecha():
     motorA.ChangeDutyCycle(20)
     motorB.ChangeDutyCycle(70)
 
-# ----------------------------------
 #  IA
-# ----------------------------------
 SAMPLE_RATE = 40
 VENTANA_SEG = 0.05
 MUESTRAS_POR_VENTANA = int(SAMPLE_RATE * VENTANA_SEG)
@@ -87,9 +76,6 @@ clasificador = joblib.load("modelo_luz.pkl")
 print("Modelo IA cargado correctamente.")
 
 
-# =======================================
-#   NUEVA VARIABLE: ÚLTIMA ACCIÓN
-# =======================================
 ultima_accion = None
 
 
@@ -143,7 +129,7 @@ try:
 
 
         # =====================================================
-        #   SOLO GUARDAR EN SUPABASE SI LA ACCIÓN CAMBIA
+        #   SOLO GUARDA EN SUPABASE SI LA ACCIÓN CAMBIA
         # =====================================================
         if accion != ultima_accion:
             try:

@@ -2,7 +2,7 @@ import os
 import csv
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-import joblib  # para guardar modelo
+import joblib
 
 def load_folder(path, label):
     X = []

@@ -1,0 +1,148 @@
+body {
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    padding: 30px;
+    background: linear-gradient(135deg, #fdf2ff, #f7ecff, #e8dcff); 
+    color: #444;
+}
+
+.titulo-principal {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 36px;
+    font-weight: 800;
+    color: #a300a3; 
+    text-shadow: 0 4px 15px rgba(163, 0, 163, 0.25);
+}
+
+h2 {
+    color: #c040ff;
+    margin-bottom: 20px;
+    text-shadow: 0 1px 3px rgba(192, 64, 255, 0.15);
+    font-size: 26px;
+    border-left: 5px solid #ff99ff;
+    padding-left: 10px;
+}
+
+section {
+    max-width: 1200px;
+    margin: 0 auto 40px auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 1s ease-in-out;
+}
+
+.estado-actual {
+    padding: 20px 0;
+}
+
+
+.estado-actual .card-estado {
+    background: linear-gradient(145deg, #ffffff, #ffe0ff); 
+    padding: 25px 35px;
+    border-radius: 20px;
+    box-shadow: 0 8px 18px rgba(192, 64, 255, 0.2);
+    width: 100%;
+    max-width: 450px;
+    border: 3px solid #ffc0ff;
+    margin: 0 auto;
+}
+
+.fila {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    font-size: 17px;
+    border-bottom: 1px dotted #ffc0ff;
+}
+
+.fila:last-child {
+    border-bottom: none;
+}
+
+.titulo {
+    font-weight: 600;
+    color: #8e24aa;
+}
+
+.valor {
+    font-weight: 700;
+    color: #c040ff;
+    text-align: right;
+}
+
+#accion, #prediccion {
+    font-size: 18px;
+    color: #d63384;
+}
+
+.tabla-historial {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgba(192, 64, 255, 0.15);
+}
+
+.tabla-historial thead {
+    background: linear-gradient(90deg, #ffc0ff, #a300a3);
+    color: white;
+}
+
+.tabla-historial th {
+    padding: 14px 10px;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+.tabla-historial th:first-child { border-top-left-radius: 15px; }
+.tabla-historial th:last-child { border-top-right-radius: 15px; }
+
+
+.tabla-historial td {
+    padding: 10px;
+    background: #fff;
+    border-bottom: 1px solid #f0e0f5;
+    font-size: 14px;
+    text-align: center;
+}
+
+.tabla-historial tr:nth-child(even) td {
+    background: #f7f0ff;
+}
+
+.tabla-historial tr:hover td {
+    background: #ffefff;
+    transition: 0.3s;
+}
+
+.tabla-historial tr:last-child td {
+    border-bottom: none;
+}
+
+.grafico-container {
+    background: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    margin-top: 35px;
+    box-shadow: 0 6px 18px rgba(163, 0, 163, 0.1);
+    border: 1px solid #ffc0ff;
+    
+    height: 400px; 
+    position: relative; 
+}
+
+#graficoLuz {
+    width: 100% !important; 
+    height: 100% !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
