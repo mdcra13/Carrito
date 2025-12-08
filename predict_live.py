@@ -7,6 +7,8 @@ import RPi.GPIO as GPIO
 
 from dotenv import load_dotenv
 from supabase import create_client
+from datetime import datetime
+import pytz
 
 load_dotenv()
 
@@ -78,6 +80,7 @@ print("Modelo IA cargado correctamente.")
 
 ultima_accion = None
 
+tz_panama = pytz.timezone("America/Panama")
 
 print("Iniciando detección...")
 
@@ -131,9 +134,11 @@ try:
         # =====================================================
         #   SOLO GUARDA EN SUPABASE SI LA ACCIÓN CAMBIA
         # =====================================================
+        fecha_local = datetime.now(tz_panama).strftime("%Y-%m-%d %H:%M:%S")
         if accion != ultima_accion:
             try:
                 supabase.table("sensores_luz").insert({
+                    "fecha_hora": fecha_local,
                     "valor_l": prom_L,
                     "valor_r": prom_R,
                     "prediccion": pred_texto,
