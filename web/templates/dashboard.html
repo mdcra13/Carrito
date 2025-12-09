@@ -3,24 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard del Carrito</title>
-
-    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-    <!-- Fuentes -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <h1 class="titulo-principal">🚗 Panel del Carrito Seguidor de Luz</h1>
 
-    <!-- 🔥 Carrito animado según acción -->
-    <div id="carrito" class="carrito-animado">🛒</div>
-
-    <!-- Estado Actual -->
     <section class="estado-actual">
         <h2>📡 Último estado del Carrito</h2>
 
@@ -52,7 +42,7 @@
         </div>
     </section>
 
-    <!-- Historial -->
+
     <section class="historial">
         <h2>📜 Historial Reciente</h2>
 
@@ -66,11 +56,11 @@
                     <th>Sensor R</th>
                 </tr>
             </thead>
-            <tbody id="tabla-datos"></tbody>
+            <tbody id="tabla-datos">
+            </tbody>
         </table>
     </section>
 
-    <!-- Gráfico -->
     <section class="grafico">
         <h2>📈 Gráfico de los sensores</h2>
 
@@ -79,14 +69,6 @@
         </div>
     </section>
 
-    <!-- 🔥 MAPA DEL RECORRIDO DEL CARRITO -->
-    <section class="mapa-ruta">
-        <h2>🗺️ Recorrido del Carrito</h2>
-
-        <div class="mapa-container">
-            <canvas id="mapaCarrito" width="800" height="300"></canvas>
-        </div>
-    </section>
 
 <script>
     let chart;
@@ -111,6 +93,7 @@
 
     function crearGrafico() {
         ajustarResolucionCanvas();
+
         const ctx = document.getElementById("graficoLuz").getContext("2d");
 
         chart = new Chart(ctx, {
@@ -148,53 +131,12 @@
         }
     }
 
-    // ====== MAPA DEL CARRITO ======
-    const canvasMapa = document.getElementById("mapaCarrito");
-    const ctxMapa = canvasMapa.getContext("2d");
-
-    let x = 400;
-    let y = 150;
-
-    function dibujarCarritoMapa() {
-        ctxMapa.clearRect(0, 0, canvasMapa.width, canvasMapa.height);
-
-        ctxMapa.beginPath();
-        ctxMapa.arc(x, y, 5, 0, Math.PI * 2);
-        ctxMapa.fillStyle = "#a300a3";
-        ctxMapa.fill();
-        ctxMapa.closePath();
-
-        ctxMapa.fillStyle = "#ff33cc";
-        ctxMapa.fillRect(x - 10, y - 10, 20, 20);
-
-        ctxMapa.strokeStyle = "#660066";
-        ctxMapa.strokeRect(x - 10, y - 10, 20, 20);
-    }
-
-    function moverCarritoSegunAccion(accion) {
-        const step = 10;
-
-        if (accion === "avanzar") y -= step;
-        if (accion === "atras") y += step;
-        if (accion === "izquierda" || accion === "girar_izquierda") x -= step;
-        if (accion === "derecha" || accion === "girar_derecha") x += step;
-
-        if (x < 10) x = 10;
-        if (x > canvasMapa.width - 10) x = canvasMapa.width - 10;
-        if (y < 10) y = 10;
-        if (y > canvasMapa.height - 10) y = canvasMapa.height - 10;
-
-        dibujarCarritoMapa();
-    }
-
-    // Función principal de carga de datos
     async function cargarDatos() {
         const res = await fetch("/api/datos");
         const datos = await res.json();
         if (datos.length === 0) return;
 
         const ultimo = datos[0];
-
         document.getElementById("accion").innerText = ultimo.accion;
         document.getElementById("prediccion").innerText = ultimo.prediccion;
         document.getElementById("sensorL").innerText = ultimo.sensor_izq;
@@ -203,6 +145,7 @@
 
         const tabla = document.getElementById("tabla-datos");
         tabla.innerHTML = "";
+
         datos.forEach(d => {
             tabla.innerHTML += `
                 <tr>
@@ -211,7 +154,8 @@
                     <td>${d.prediccion}</td>
                     <td>${d.sensor_izq}</td>
                     <td>${d.sensor_der}</td>
-                </tr>`;
+                </tr>
+            `;
         });
 
         labels = datos.map(d => d.fecha).reverse();
@@ -219,11 +163,8 @@
         dataR = datos.map(d => d.sensor_der).reverse();
 
         actualizarGrafico();
-
-        moverCarritoSegunAccion(ultimo.accion);
     }
 
-    dibujarCarritoMapa();
     cargarDatos();
     setInterval(cargarDatos, 3000);
 </script>
