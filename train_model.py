@@ -27,18 +27,18 @@ def load_folder(path, label):
             y.append(label)
     return X, y
 
-# cargar dataset
+# carga dataset
 Xa, ya = load_folder("dataset/ambiente", 0)
 Xl, yl = load_folder("dataset/linterna", 1)
 
 X = np.array(Xa + Xl)
 y = np.array(ya + yl)
 
-# entrenar modelo
+# entrena modelo
 clf = RandomForestClassifier(n_estimators=200)
 clf.fit(X, y)
 
-# guardar modelo
+# guarda modelo
 joblib.dump(clf, "modelo_luz.pkl")
 
 print("Modelo entrenado y guardado como modelo_luz.pkl")

@@ -21,7 +21,7 @@ def home():
 @app.route("/api/datos")
 def api_datos():
     try:
-        # Traer los últimos 20 registros
+        # Trae los últimos 20 registros
         res = (
             supabase
             .table("sensores_luz")
@@ -36,7 +36,7 @@ def api_datos():
         datos_limpios = []
         for d in datos:
 
-            # ========= LIMPIAR Y FORMATEAR FECHA =========
+            # LIMPIAR Y FORMATEAR FECHA
             raw_fecha = d.get("fecha_hora") or d.get("created_at")
 
             if raw_fecha:

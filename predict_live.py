@@ -86,7 +86,6 @@ print("Iniciando detección...")
 
 try:
     while True:
-        # === CAPTURA RÁPIDA ===
         valores_L = []
         valores_R = []
 
@@ -127,13 +126,9 @@ try:
             accion = "detener"
             detener()
 
-        # Convertir predicción
         pred_texto = "linterna" if prediccion == 1 else "ambiente"
 
-
-        # =====================================================
         #   SOLO GUARDA EN SUPABASE SI LA ACCIÓN CAMBIA
-        # =====================================================
         fecha_local = datetime.now(tz_panama).strftime("%Y-%m-%d %H:%M:%S")
         if accion != ultima_accion:
             try:
